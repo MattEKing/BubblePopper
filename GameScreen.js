@@ -31,7 +31,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, View, Text, Dimensions, TouchableWithoutFeedback, Animated, PanResponder } from 'react-native';
 import Bubble from './components/Bubble';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -71,7 +71,7 @@ export default function GameScreen() {
   
   // Fixed gun position - currently in the middle (MODIFY THIS)
   const gunWidth = 60;
-  const gunPosition = screenWidth / 2 - gunWidth / 2;
+  // const gunPosition = screenWidth / 2 - gunWidth / 2;
   const gunCenterX = screenWidth / 2;
   
   /**
@@ -90,7 +90,44 @@ export default function GameScreen() {
    *   setGunPosition({ x: locationX - gunWidth/2, y: locationY });
    * };
    */
-  
+  //------------------------------------------------------------------------------------------------
+  // All gun movement is now handle with the Animated react native object 
+    const [dragging, setDragging] = useState(false);
+    const gunPanX = useRef(new Animated.Value(screenWidth / 2 - gunWidth / 2)).current;
+    const lastGunX = useRef(screenWidth / 2 - gunWidth / 2);
+
+    useEffect(() => {
+      const listenerId = gunPanX.addListener(({ value }) => {
+        lastGunX.current = value;
+      });
+      return () => {
+        gunPanX.removeListener(listenerId);
+      };
+    }, []);
+
+    const panResponder = useRef (
+      PanResponder.create({
+
+        onStartShouldSetPanResponder: () => true,
+
+        onPanResponderGrant: () => {
+          setDragging(true);
+        },
+
+        onPanResponderMove: (event, state) => {
+          const newX = state.moveX - gunWidth / 2;
+          const widthRange = Math.max(0, Math.min(newX, screenWidth - gunWidth));
+          gunPanX.setValue(widthRange);
+        },
+        onPanResponderRelease: () => {
+          setDragging(false);
+        }
+      }
+      )
+    ).current;
+
+    console.log(gunPanX);
+
   // Refs for game timers and IDs
   const bubbleIdRef = useRef(1);
   const timerRef = useRef(null);
@@ -101,8 +138,8 @@ export default function GameScreen() {
    * Handle tap to shoot laser
    * Currently fires the laser on any tap when game is active
    */
-  const handleTap = () => {
-    if (!gameStarted || gameOver) return;
+  const handleTap = (event) => {
+    if (!gameStarted || gameOver || dragging) return;
     fireLaser();
   };
   
@@ -298,7 +335,7 @@ export default function GameScreen() {
   return (
     <View style={styles.container}>
       {/* Game area */}
-      <TouchableWithoutFeedback onPress={handleTap} disabled={!gameStarted || gameOver}>
+      <TouchableWithoutFeedback onPress={handleTap} disabled={!gameStarted || gameOver || dragging}>
         <View style={styles.gameArea}>
           {/* Bubbles */}
           {bubbles.map(bubble => (
@@ -341,10 +378,10 @@ export default function GameScreen() {
            */}
           
           {/* Gun - currently static in middle */}
-          <View style={[styles.gun, { left: gunPosition }]}>
-            <View style={styles.gunBase} />
-            <View style={styles.gunBarrel} />
-          </View>
+            <Animated.View style={[styles.gun, { transform: [{ translateX: gunPanX }]}]} {...panResponder.panHandlers}>
+              <View style={styles.gunBase} />
+              <View style={styles.gunBarrel} />
+            </Animated.View>
         </View>
       </TouchableWithoutFeedback>
 
@@ -446,7 +483,7 @@ const styles = StyleSheet.create({
   },
   gun: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 60,
     width: 60,
     height: 60,
     justifyContent: 'center',
