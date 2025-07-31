@@ -173,7 +173,7 @@ export default function GameScreen() {
      */
     
     // Check for hits immediately
-    checkHits(gunCenterX);
+    checkHits(lastGunX.current + gunWidth / 2);
     
     // Make laser disappear after 300ms
     laserTimeoutRef.current = setTimeout(() => {
@@ -359,10 +359,10 @@ export default function GameScreen() {
           
           {/* Laser - currently fixed to fire from center of gun */}
           {laserVisible && (
-            <View
+            <Animated.View
               style={[
                 styles.laser,
-                { left: gunCenterX - 2 } // Center the 4px wide laser from gun center
+                { transform: [{ translateX: Animated.add(gunPanX, new Animated.Value(gunWidth / 2 - 2)) }]} // Center the 4px wide laser from gun center
               ]}
             />
           )}
@@ -432,7 +432,7 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000033',
+    backgroundColor: '#3131a8ff',
   },
   gameArea: {
     flex: 1,
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#41b2b6ff',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -494,31 +494,31 @@ const styles = StyleSheet.create({
   },
   gunBase: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 10,
     width: 40,
-    height: 20,
+    height: 35,
     backgroundColor: '#333',
-    borderTopLeftRadius: 5,
-    borderTopRightRadius: 5,
+    borderRadius: 5
   },
   gunBarrel: {
     position: 'absolute',
     bottom: 20,
-    width: 10,
-    height: 30,
+    width: 15,
+    height: 50,
     backgroundColor: '#222',
+    borderBottomLeftRadius: 5,
+    borderBottomRightRadius: 5
   },
   laser: {
     position: 'absolute',
     top: 0,
-    width: 4,
-    height: '100%',
-    backgroundColor: '#ff0000',
-    shadowColor: '#ff0000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 20,
-    zIndex: 90,
+    width: 7,
+    height: '90%',
+    backgroundColor: '#fbff00ff',
+    borderColor: '#c26f22ff',
+    borderStyle: 'solid',
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    zIndex: 40,
   },
 });
