@@ -42,18 +42,38 @@ export default function Bubble({ x, y, radius }) {
           borderRadius: radius,
         },
       ]}
+      >
+    <View
+    style={[
+      styles.shine,
+      {
+        width: radius * 0.8,
+        height: radius * 0.8,
+        borderRadius: radius * 0.4,
+      },
+    ]}
     />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   bubble: {
     position: 'absolute',
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'rgba(65, 178, 182, 0.8)',
+    opacity: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+    borderWidth: 1.5,
+    borderColor: '#ffffffaa',
   },
+  shine: {
+  position: 'absolute',
+  top: '15%',
+  left: '15%',
+  backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  }
 });

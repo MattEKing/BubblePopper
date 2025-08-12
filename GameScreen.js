@@ -31,7 +31,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, View, Text, Dimensions, TouchableWithoutFeedback, Animated, PanResponder } from 'react-native';
 import Bubble from './components/Bubble';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -71,8 +71,8 @@ export default function GameScreen() {
   
   // Fixed gun position - currently in the middle (MODIFY THIS)
   const gunWidth = 60;
-  const gunPosition = screenWidth / 2 - gunWidth / 2;
-  const gunCenterX = screenWidth / 2;
+  // const gunPosition = screenWidth / 2 - gunWidth / 2;
+  // const gunCenterX = screenWidth / 2;
   
   /**
    * ============== STUDENT TASK 2 ==============
@@ -90,7 +90,44 @@ export default function GameScreen() {
    *   setGunPosition({ x: locationX - gunWidth/2, y: locationY });
    * };
    */
-  
+  //------------------------------------------------------------------------------------------------
+  // All gun movement is now handle with the Animated react native object 
+    const [dragging, setDragging] = useState(false);
+    const gunPanX = useRef(new Animated.Value(screenWidth / 2 - gunWidth / 2)).current;
+    const lastGunX = useRef(screenWidth / 2 - gunWidth / 2);
+
+    useEffect(() => {
+      const listenerId = gunPanX.addListener(({ value }) => {
+        lastGunX.current = value;
+      });
+      return () => {
+        gunPanX.removeListener(listenerId);
+      };
+    }, []);
+
+    const panResponder = useRef (
+      PanResponder.create({
+
+        onStartShouldSetPanResponder: () => true,
+
+        onPanResponderGrant: () => {
+          setDragging(true);
+        },
+
+        onPanResponderMove: (event, state) => {
+          const newX = state.moveX - gunWidth / 2;
+          const widthRange = Math.max(10, Math.min(newX, screenWidth - gunWidth - 10));
+          gunPanX.setValue(widthRange);
+        },
+        onPanResponderRelease: () => {
+          setDragging(false);
+        }
+      }
+      )
+    ).current;
+
+    console.log(gunPanX);
+
   // Refs for game timers and IDs
   const bubbleIdRef = useRef(1);
   const timerRef = useRef(null);
@@ -101,8 +138,8 @@ export default function GameScreen() {
    * Handle tap to shoot laser
    * Currently fires the laser on any tap when game is active
    */
-  const handleTap = () => {
-    if (!gameStarted || gameOver) return;
+  const handleTap = (event) => {
+    if (!gameStarted || gameOver || dragging) return;
     fireLaser();
   };
   
@@ -136,7 +173,7 @@ export default function GameScreen() {
      */
     
     // Check for hits immediately
-    checkHits(gunCenterX);
+    checkHits(lastGunX.current + gunWidth / 2);
     
     // Make laser disappear after 300ms
     laserTimeoutRef.current = setTimeout(() => {
@@ -298,7 +335,7 @@ export default function GameScreen() {
   return (
     <View style={styles.container}>
       {/* Game area */}
-      <TouchableWithoutFeedback onPress={handleTap} disabled={!gameStarted || gameOver}>
+      <TouchableWithoutFeedback onPress={handleTap} disabled={!gameStarted || gameOver || dragging}>
         <View style={styles.gameArea}>
           {/* Bubbles */}
           {bubbles.map(bubble => (
@@ -322,10 +359,10 @@ export default function GameScreen() {
           
           {/* Laser - currently fixed to fire from center of gun */}
           {laserVisible && (
-            <View
+            <Animated.View
               style={[
                 styles.laser,
-                { left: gunCenterX - 2 } // Center the 4px wide laser from gun center
+                { transform: [{ translateX: Animated.add(gunPanX, new Animated.Value(gunWidth / 2 - 2)) }]} // Center the 4px wide laser from gun center
               ]}
             />
           )}
@@ -341,10 +378,10 @@ export default function GameScreen() {
            */}
           
           {/* Gun - currently static in middle */}
-          <View style={[styles.gun, { left: gunPosition }]}>
-            <View style={styles.gunBase} />
-            <View style={styles.gunBarrel} />
-          </View>
+            <Animated.View style={[styles.gun, { transform: [{ translateX: gunPanX }]}]} {...panResponder.panHandlers}>
+              <View style={styles.gunBase} />
+              <View style={styles.gunBarrel} />
+            </Animated.View>
         </View>
       </TouchableWithoutFeedback>
 
@@ -395,7 +432,7 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000033',
+    backgroundColor: '#3131a8ff',
   },
   gameArea: {
     flex: 1,
@@ -406,14 +443,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     position: 'absolute',
-    top: 30,
+    top: 50,
     left: 20,
     right: 20,
     zIndex: 10,
   },
   scoreText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   overlay: {
@@ -434,7 +471,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#41b2b6ff',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -446,42 +483,45 @@ const styles = StyleSheet.create({
   },
   gun: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 60,
     width: 60,
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 50,
-    backgroundColor: '#555',
+    backgroundColor: 'rgba(197, 197, 197, 0.8)',
     borderRadius: 5,
   },
   gunBase: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 10,
     width: 40,
-    height: 20,
-    backgroundColor: '#333',
-    borderTopLeftRadius: 5,
-    borderTopRightRadius: 5,
+    height: 35,
+    backgroundColor: 'rgba(54, 63, 105, 0.8)',
+    borderRadius: 5
   },
   gunBarrel: {
     position: 'absolute',
     bottom: 20,
-    width: 10,
-    height: 30,
+    width: 15,
+    height: 50,
     backgroundColor: '#222',
+    borderBottomLeftRadius: 5,
+    borderBottomRightRadius: 5,
+    borderColor: 'rgba(197, 197, 197, 0.8)',
+    borderStyle: 'solid',
+    borderWidth: 2
   },
   laser: {
     position: 'absolute',
     top: 0,
-    width: 4,
-    height: '100%',
-    backgroundColor: '#ff0000',
-    shadowColor: '#ff0000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 20,
-    zIndex: 90,
+    width: 6,
+    height: '90%',
+    backgroundColor: '#fbff00ff',
+    borderColor: '#c26f22ff',
+    borderStyle: 'solid',
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    zIndex: 40,
   },
 });
