@@ -72,7 +72,7 @@ export default function GameScreen() {
   // Fixed gun position - currently in the middle (MODIFY THIS)
   const gunWidth = 60;
   // const gunPosition = screenWidth / 2 - gunWidth / 2;
-  const gunCenterX = screenWidth / 2;
+  // const gunCenterX = screenWidth / 2;
   
   /**
    * ============== STUDENT TASK 2 ==============
@@ -116,7 +116,7 @@ export default function GameScreen() {
 
         onPanResponderMove: (event, state) => {
           const newX = state.moveX - gunWidth / 2;
-          const widthRange = Math.max(0, Math.min(newX, screenWidth - gunWidth));
+          const widthRange = Math.max(10, Math.min(newX, screenWidth - gunWidth - 10));
           gunPanX.setValue(widthRange);
         },
         onPanResponderRelease: () => {
@@ -443,14 +443,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     position: 'absolute',
-    top: 30,
+    top: 50,
     left: 20,
     right: 20,
     zIndex: 10,
   },
   scoreText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   overlay: {
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 50,
-    backgroundColor: '#555',
+    backgroundColor: 'rgba(197, 197, 197, 0.8)',
     borderRadius: 5,
   },
   gunBase: {
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     bottom: 10,
     width: 40,
     height: 35,
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(54, 63, 105, 0.8)',
     borderRadius: 5
   },
   gunBarrel: {
@@ -507,12 +507,15 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: '#222',
     borderBottomLeftRadius: 5,
-    borderBottomRightRadius: 5
+    borderBottomRightRadius: 5,
+    borderColor: 'rgba(197, 197, 197, 0.8)',
+    borderStyle: 'solid',
+    borderWidth: 2
   },
   laser: {
     position: 'absolute',
     top: 0,
-    width: 7,
+    width: 6,
     height: '90%',
     backgroundColor: '#fbff00ff',
     borderColor: '#c26f22ff',
